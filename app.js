@@ -1,3 +1,13 @@
+// Service Worker を登録する
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    .then(function(registration) {
+      console.log('Service Worker registered with scope:', registration.scope);
+    }).catch(function(err) {
+      console.error('Service Worker registration failed:', err);
+    });
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyCKA9NCe62zF2KayRcViNNYKspGIwhDy_8",
   authDomain: "volley-analysis.firebaseapp.com",
