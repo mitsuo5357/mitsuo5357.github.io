@@ -33,3 +33,40 @@ messaging.onBackgroundMessage(function(payload) {
   // 通知を表示する！
   return self.registration.showNotification(notificationTitle, notificationOptions);
 });
+
+// --- ここから追加するコード ---
+
+// 通知がクリックされたときの処理
+self.addEventListener('notificationclick', function(event) {
+  console.log('[firebase-messaging-sw.js] Notification click Received.', event.notification);
+
+ // 通知をクリックしたら、その通知は閉じる
+ event.notification.close();
+
+ // 通知データからURLを取得する (onBackgroundMessageで設定したやつ)
+ const urlToOpen = event.notification.data.url || '/'; // デフォルトはルートパス
+
+ // クライアント(ブラウザのタブやウィンドウ)を探す
+  event.waitUntil(
+    clients.matchAll({ // clients はサービスワーカーが制御できるブラウザのタブやウィンドウのこと
+      type: "window",
+      includeUncontrolled: true // 現在サービスワーカーが直接制御していないクライアントも対象に含める
+    }).then(function(clientList) {
+      // すでに同じURLが開いているタブがあるかチェック
+      for (let i = 0; i < clientList.length; i++) {
+        const client = clientList[i];
+        // client.url には末尾に / がつく場合とつかない場合があるので、正規化して比較するとより確実
+        // ここでは簡単化のため完全一致で比較
+        if (client.url === new URL(urlToOpen, self.location.origin).href && 'focus' in client) {
+          return client.focus(); // あったら、そのタブを前面に出す
+        }
+      }
+      // 開いているタブがなかったら、新しいタブで指定のURLを開く
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
+
+// --- 追加するコードはここまで ---
